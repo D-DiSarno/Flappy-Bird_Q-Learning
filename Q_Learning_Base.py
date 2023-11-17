@@ -2,6 +2,7 @@ from collections import deque
 import random
 import numpy as np
 import os
+import torch
 from helper import plot
 ALPHA = .001
 GAMMA = .8
@@ -35,11 +36,17 @@ class QLearningAgent:
         state_discrete = self.discretize_state(state)
         new_state_discrete = self.discretize_state(new_state)
 
-        current_q = self.q_table[state_discrete, action]
+        if state_discrete not in self.q_table:
+            self.q_table[state_discrete] = [0, 0]
+
+        if new_state_discrete not in self.q_table:
+            self.q_table[new_state_discrete] = [0, 0]
+
+        current_q = self.q_table[state_discrete][action]
         max_future_q = np.max(self.q_table[new_state_discrete])
 
         new_q = (1 - self.alpha) * current_q + self.alpha * (reward + self.gamma * max_future_q)
-        self.q_table[state_discrete, action] = new_q
+        self.q_table[state_discrete][action] = new_q
 
     def discretize_state(self, state):
         binary_str = "".join(map(lambda s: str(int(s)), state))
@@ -50,23 +57,18 @@ class QLearningAgent:
     def get_action(self, state, epsilon=True):
         self.epsilon = np.interp(self.num_games, [0, self.epsilon_decay], [self.epsilon_start, self.epsilon_end])
         action = [0, 0]
-        state_discrete = self.discretize_state(state)
-        if epsilon:
-            if self.epsilon >= random.uniform(0.0, 1.0):
-                move = random.randint(0, 1)
-                action[move] = 1
-            else:
-                if state_discrete not in self.q_table:
-                    # Se la chiave non è presente, inizializzala con valori predefiniti
-                    self.q_table[state_discrete] = [0, 0]
-                move = np.argmax(self.q_table[self.discretize_state(state)])
-                action[move] = 1
+
+        if epsilon and self.epsilon >= random.uniform(0.0, 1.0):
+            move = random.randint(0, 1)
+            action[move] = 0
         else:
-            move = np.argmax(self.q_table[self.discretize_state(state)])
+            state_discrete = self.discretize_state(state)
+            if state_discrete not in self.q_table:
+                self.q_table[state_discrete] = [0, 0]
+
+            move = np.argmax(self.q_table[state_discrete])
             action[move] = 1
-            self.gm.setOutputs(action)
-        action = [0, 0]
-        action[move] = 1
+
         return action
 
     def save_scores(self, record, total_score, run_num, type, file_name='scores.txt'):
