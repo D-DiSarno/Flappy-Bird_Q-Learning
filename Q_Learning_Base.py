@@ -1,72 +1,73 @@
-import numpy as np
+from collections import deque
 import random
+import numpy as np
 import os
-
-# Q-learning parameters
-
-ALPHA = 0.01
-GAMMA = 0.8
+from helper import plot
+ALPHA = .001
+GAMMA = .8
+BATCH_SIZE = 32
+BUFFER_SIZE = 700000
 EPSILON_START = 1.0
-EPSILON_END = 0.02
-EPSILON_DECAY = 1000
-NUM_ACTIONS = 2
+EPSILON_END = .02
+EPSILON_DECAY=1000
 
 class QLearningAgent:
-    def __init__(self, gm, epsilon_start=EPSILON_START, epsilon_end=EPSILON_END, epsilon_decay=EPSILON_DECAY):
+    def __init__(self, gm, alpha=ALPHA, gamma=GAMMA, epsilon_start=EPSILON_START, epsilon_end=EPSILON_END, epsilon_decay=EPSILON_DECAY, buffer_size=BUFFER_SIZE):
         self.num_games = 0
-        self.Q_table = {}  # Q-table to store Q values
+        self.gamma = gamma
+        self.memory = deque(maxlen=buffer_size)
         self.gm = gm
-        self.alpha = ALPHA
-        self.gamma = GAMMA
+        self.alpha = alpha
         self.epsilon_start = epsilon_start
         self.epsilon_end = epsilon_end
         self.epsilon_decay = epsilon_decay
-
+        self.q_table = {}  # Aggiunta dell'inizializzazione della tabella Q
     def new_gm(self, gm):
         self.gm = gm
 
     def get_state(self):
-
-     return tuple(self.gm.getState())
-
-    def get_action(self, state, epsilon=True):
-        self.epsilon = np.interp(self.num_games, [0, self.epsilon_decay], [self.epsilon_start, self.epsilon_end])
-
-        #if epsilon and random.uniform(0, 1) < self.epsilon:
-        #    return random.choice(range(NUM_ACTIONS))
-        #else:
-          #  state = self.get_state()
-          #  if state not in self.Q_table:
-         #       return random.choice(range(NUM_ACTIONS))
-          #  else:
-           #     return max(range(NUM_ACTIONS), key=lambda a: self.Q_table[state][a])
-        return [0,1]
+        return np.array(self.gm.getState(), dtype=int)
 
     def remember(self, state, action, reward, new_state, done):
-        state = tuple(state)
-        new_state = tuple(new_state)
+        self.memory.append((state, action, reward, new_state, done))
 
-        if state not in self.Q_table:
-            self.Q_table[state] = [0] * NUM_ACTIONS
-        if new_state not in self.Q_table:
-            self.Q_table[new_state] = [0] * NUM_ACTIONS
+    def train_step(self, state, action, reward, new_state, done):
+        state_discrete = self.discretize_state(state)
+        new_state_discrete = self.discretize_state(new_state)
 
-        action_index = np.argmax(action)  # Convert action to an integer index
-        max_future_q = max(self.Q_table[new_state])
-        current_q = self.Q_table[state][action_index]
+        current_q = self.q_table[state_discrete, action]
+        max_future_q = np.max(self.q_table[new_state_discrete])
 
-        if not done:
-            new_q = (1 - ALPHA) * current_q + ALPHA * (reward + GAMMA * max_future_q)
+        new_q = (1 - self.alpha) * current_q + self.alpha * (reward + self.gamma * max_future_q)
+        self.q_table[state_discrete, action] = new_q
+
+    def discretize_state(self, state):
+        binary_str = "".join(map(lambda s: str(int(s)), state))
+        try:
+            return int(binary_str, 2)
+        except ValueError:
+            return 0  # o un altro valore di default se la conversione fallisce
+    def get_action(self, state, epsilon=True):
+        self.epsilon = np.interp(self.num_games, [0, self.epsilon_decay], [self.epsilon_start, self.epsilon_end])
+        action = [0, 0]
+        state_discrete = self.discretize_state(state)
+        if epsilon:
+            if self.epsilon >= random.uniform(0.0, 1.0):
+                move = random.randint(0, 1)
+                action[move] = 1
+            else:
+                if state_discrete not in self.q_table:
+                    # Se la chiave non è presente, inizializzala con valori predefiniti
+                    self.q_table[state_discrete] = [0, 0]
+                move = np.argmax(self.q_table[self.discretize_state(state)])
+                action[move] = 1
         else:
-            new_q = (1 - ALPHA) * current_q + ALPHA * reward
-
-        self.Q_table[state][action_index] = new_q
-
-    def train_long_memory(self):
-        pass  # Q-learning without experience replay doesn't need this
-
-    def train_short_memory(self, state, action, reward, new_state, done):
-        self.remember(state, action, reward, new_state, done)
+            move = np.argmax(self.q_table[self.discretize_state(state)])
+            action[move] = 1
+            self.gm.setOutputs(action)
+        action = [0, 0]
+        action[move] = 1
+        return action
 
     def save_scores(self, record, total_score, run_num, type, file_name='scores.txt'):
         if run_num is None:
@@ -83,23 +84,22 @@ class QLearningAgent:
 def train(agent, run_num=None, epochs=None, plotting_scores=False):
     total_score = 0
     record = 0
-    agent = agent
     plot_scores = []
     plot_mean_scores = []
 
+    # resets the environment
     agent.gm.reset()
     agent.num_games = 0
 
     while True:
+        # get old state
         state = agent.get_state()
+        # get move
         action = agent.get_action(state)
+        # action then new state
         reward, done, score = agent.gm.actionSequence(action)
         new_state = agent.get_state()
         agent.remember(state, action, reward, new_state, done)
-
-
-
-        agent.train_short_memory(state, action, reward, new_state, done)
 
         if done:
             total_score += score
@@ -114,10 +114,46 @@ def train(agent, run_num=None, epochs=None, plotting_scores=False):
                 plot_scores.append(score)
                 mean_score = total_score / agent.num_games
                 plot_mean_scores.append(mean_score)
-                print(f"Game: {agent.num_games}, Score: {score}, Epsilon: {agent.epsilon}")
-                print(f"State: {state}")
-                # Plotting function here
+                plot(plot_scores, plot_mean_scores, "Training...")
 
         if epochs == agent.num_games:
             agent.save_scores(record, total_score, run_num, 'train')
+            break
+
+
+def evaluate(agent, run_num=None, epochs=None, plotting_scores=False):
+    total_score = 0
+    record = 0
+    plot_scores = []
+    plot_mean_scores = []
+
+    # resets the environment
+    agent.gm.reset()
+    agent.num_games = 0
+
+    while True:
+        # get old state
+        state = agent.get_state()
+        # get move
+        action = agent.get_action(state, epsilon=False)
+        # action then new state
+        _, done, score = agent.gm.actionSequence(action)
+
+        if done:
+            total_score += score
+            agent.gm.reset()
+            agent.num_games += 1
+
+            if score > record:
+                record = score
+                agent.save_scores(record, total_score, run_num, 'evaluate')
+
+            if plotting_scores:
+                plot_scores.append(score)
+                mean_score = total_score / agent.num_games
+                plot_mean_scores.append(mean_score)
+                plot(plot_scores, plot_mean_scores, "Evaluating...")
+
+        if epochs == agent.num_games:
+            agent.save_scores(record, total_score, run_num, 'evaluate')
             break
