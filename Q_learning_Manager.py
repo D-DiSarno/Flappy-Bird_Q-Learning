@@ -176,7 +176,7 @@ def train(agent, run_num=None, epochs=None, plotting_scores=False):
                 plot_scores.append(score)
                 mean_score = total_score / agent.num_games
                 plot_mean_scores.append(mean_score)
-                plot(plot_scores, plot_mean_scores, "Training...")
+                plot(plot_scores, plot_mean_scores, "Training...", agent.num_games)
 
         if epochs == agent.num_games:
             agent.model.save(run_num, 'train')
@@ -212,7 +212,7 @@ def evaluate(agent, run_num=None, epochs=None, plotting_scores=False):
                 plot_scores.append(score)
                 mean_score = total_score / agent.num_games
                 plot_mean_scores.append(mean_score)
-                plot(plot_scores, plot_mean_scores, "Evaluating...")
+                plot(plot_scores, plot_mean_scores, "Evaluating...", agent.num_games)
 
         if epochs == agent.num_games:
             agent.save_scores(record, total_score, run_num, 'evaluate')

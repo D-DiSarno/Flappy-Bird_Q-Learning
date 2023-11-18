@@ -3,17 +3,21 @@ import random
 import numpy as np
 import os
 import torch
+from datetime import datetime
 from helper import plot
-ALPHA = .001
-GAMMA = .8
-BATCH_SIZE = 32
+
+ALPHA = 0.01
+GAMMA = 2.5
+BATCH_SIZE = 64
 BUFFER_SIZE = 700000
 EPSILON_START = 1.0
 EPSILON_END = .02
-EPSILON_DECAY=1000
+EPSILON_DECAY = 7000
+
 
 class QLearningAgent:
-    def __init__(self, gm, alpha=ALPHA, gamma=GAMMA, epsilon_start=EPSILON_START, epsilon_end=EPSILON_END, epsilon_decay=EPSILON_DECAY, buffer_size=BUFFER_SIZE):
+    def __init__(self, gm, alpha=ALPHA, gamma=GAMMA, epsilon_start=EPSILON_START, epsilon_end=EPSILON_END,
+                 epsilon_decay=EPSILON_DECAY, buffer_size=BUFFER_SIZE):
         self.num_games = 0
         self.gamma = gamma
         self.memory = deque(maxlen=buffer_size)
@@ -23,6 +27,7 @@ class QLearningAgent:
         self.epsilon_end = epsilon_end
         self.epsilon_decay = epsilon_decay
         self.q_table = {}  # Aggiunta dell'inizializzazione della tabella Q
+
     def new_gm(self, gm):
         self.gm = gm
 
@@ -54,6 +59,7 @@ class QLearningAgent:
             return int(binary_str, 2)
         except ValueError:
             return 0  # o un altro valore di default se la conversione fallisce
+
     def get_action(self, state, epsilon=True):
         self.epsilon = np.interp(self.num_games, [0, self.epsilon_decay], [self.epsilon_start, self.epsilon_end])
         action = [0, 0]
@@ -73,11 +79,12 @@ class QLearningAgent:
 
     def save_scores(self, record, total_score, run_num, type, file_name='scores.txt'):
         if run_num is None:
-            model_folder_path = './model/' + str(type)
+            model_folder_path = './models/model' + datetime.today().strftime('_%Y-%m-%d_%H-%M') + '/' + str(type)
         else:
-            model_folder_path = './model/' + str(type) + str(run_num)
+            model_folder_path = './models/model' + datetime.today().strftime('_%Y-%m-%d_%H-%M') + '/' + str(type) + str(run_num)
         if not os.path.exists(model_folder_path):
             os.makedirs(model_folder_path)
+
         file_name = os.path.join(model_folder_path, file_name)
         with open(file_name, 'w') as r:
             r.write(str(record) + '\n' + str(total_score / self.num_games))
@@ -116,7 +123,7 @@ def train(agent, run_num=None, epochs=None, plotting_scores=False):
                 plot_scores.append(score)
                 mean_score = total_score / agent.num_games
                 plot_mean_scores.append(mean_score)
-                plot(plot_scores, plot_mean_scores, "Training...")
+                plot(plot_scores, plot_mean_scores, "Training...", agent.num_games)
 
         if epochs == agent.num_games:
             agent.save_scores(record, total_score, run_num, 'train')
@@ -154,7 +161,7 @@ def evaluate(agent, run_num=None, epochs=None, plotting_scores=False):
                 plot_scores.append(score)
                 mean_score = total_score / agent.num_games
                 plot_mean_scores.append(mean_score)
-                plot(plot_scores, plot_mean_scores, "Evaluating...")
+                plot(plot_scores, plot_mean_scores, "Evaluating...", agent.num_games)
 
         if epochs == agent.num_games:
             agent.save_scores(record, total_score, run_num, 'evaluate')
