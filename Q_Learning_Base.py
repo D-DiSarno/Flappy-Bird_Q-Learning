@@ -4,15 +4,17 @@ import numpy as np
 import os
 import torch
 from datetime import datetime
+
+import helper
 from helper import plot
 
-ALPHA = 0.01
-GAMMA = 2.5
-BATCH_SIZE = 64
+ALPHA = 0.5
+GAMMA = 6.5
+BATCH_SIZE = 128
 BUFFER_SIZE = 700000
 EPSILON_START = 1.0
-EPSILON_END = .02
-EPSILON_DECAY = 7000
+EPSILON_END = 0.7
+EPSILON_DECAY = 20000
 
 
 class QLearningAgent:
@@ -27,6 +29,9 @@ class QLearningAgent:
         self.epsilon_end = epsilon_end
         self.epsilon_decay = epsilon_decay
         self.q_table = {}  # Aggiunta dell'inizializzazione della tabella Q
+        self.path_to_model = './models/model' + datetime.today().strftime('_%Y-%m-%d_%H-%M') + '/'
+        os.makedirs(self.path_to_model)
+        helper.path_to_model = self.path_to_model
 
     def new_gm(self, gm):
         self.gm = gm
@@ -79,16 +84,15 @@ class QLearningAgent:
 
     def save_scores(self, record, total_score, run_num, type, file_name='scores.txt'):
         if run_num is None:
-            model_folder_path = './models/model' + datetime.today().strftime('_%Y-%m-%d_%H-%M') + '/' + str(type)
+            model_folder_path = self.path_to_model + str(type)
         else:
-            model_folder_path = './models/model' + datetime.today().strftime('_%Y-%m-%d_%H-%M') + '/' + str(type) + str(run_num)
+            model_folder_path = self.path_to_model + str(type) + str(run_num)
         if not os.path.exists(model_folder_path):
             os.makedirs(model_folder_path)
 
         file_name = os.path.join(model_folder_path, file_name)
         with open(file_name, 'w') as r:
             r.write(str(record) + '\n' + str(total_score / self.num_games))
-
 
 def train(agent, run_num=None, epochs=None, plotting_scores=False):
     total_score = 0
