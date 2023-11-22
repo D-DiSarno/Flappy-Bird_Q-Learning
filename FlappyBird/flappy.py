@@ -388,7 +388,7 @@ class game:
         
         self.playerSurface = pygame.transform.rotate(self.IMAGES['player'][self.playerIndex], self.visibleRot)
         self.SCREEN.blit(self.playerSurface, (self.playerx, self.playery))
-        self.showInfo()
+        # self.showInfo()
         pygame.display.update()
         self.FPSCLOCK.tick(self.getFPS())
 

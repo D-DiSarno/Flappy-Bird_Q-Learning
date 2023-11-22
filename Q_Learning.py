@@ -8,13 +8,13 @@ from datetime import datetime
 import helper
 from helper import plot
 
-ALPHA = 0.5
+ALPHA = 0.1
 GAMMA = 6.5
 BATCH_SIZE = 128
-BUFFER_SIZE = 700000
+BUFFER_SIZE = 250000
 EPSILON_START = 1.0
 EPSILON_END = 0.7
-EPSILON_DECAY = 20000
+EPSILON_DECAY = 7000
 
 
 class QLearningAgent:
@@ -29,8 +29,9 @@ class QLearningAgent:
         self.epsilon_end = epsilon_end
         self.epsilon_decay = epsilon_decay
         self.q_table = {}  # Aggiunta dell'inizializzazione della tabella Q
+
         self.path_to_model = './models/model' + datetime.today().strftime('_%Y-%m-%d_%H-%M') + '/'
-        os.makedirs(self.path_to_model)
+        # os.makedirs(self.path_to_model)
         helper.path_to_model = self.path_to_model
 
     def new_gm(self, gm):
@@ -82,17 +83,52 @@ class QLearningAgent:
 
         return action
 
-    def save_scores(self, record, total_score, run_num, type, file_name='scores.txt'):
+    def save_model(self, record, total_score, run_num, type, file_name='scores.txt'):
         if run_num is None:
             model_folder_path = self.path_to_model + str(type)
         else:
             model_folder_path = self.path_to_model + str(type) + str(run_num)
+
         if not os.path.exists(model_folder_path):
             os.makedirs(model_folder_path)
 
         file_name = os.path.join(model_folder_path, file_name)
         with open(file_name, 'w') as r:
             r.write(str(record) + '\n' + str(total_score / self.num_games))
+
+        if type == 'train':
+            model_state = {
+                'num_games': self.num_games,
+                'gamma': self.gamma,
+                'memory': self.memory,
+                'alpha': self.alpha,
+                'epsilon_start': self.epsilon_start,
+                'epsilon_end': self.epsilon_end,
+                'epsilon_decay': self.epsilon_decay,
+                'q_table': self.q_table
+            }
+
+            file_name = os.path.join(model_folder_path, "q_learning_training.pt")
+            torch.save(model_state, file_name)
+
+    def load_model(self, filename="q_learning_training.pt"):
+        self.path_to_model = filename
+        file_path = os.path.join(filename, "train/q_learning_training.pt")
+
+        if os.path.exists(file_path):
+            model_state = torch.load(file_path)
+            self.num_games = model_state['num_games']
+            self.gamma = model_state['gamma']
+            self.memory = model_state['memory']
+            self.alpha = model_state['alpha']
+            self.epsilon_start = model_state['epsilon_start']
+            self.epsilon_end = model_state['epsilon_end']
+            self.epsilon_decay = model_state['epsilon_decay']
+            self.q_table = model_state['q_table']
+            print(f'Model loaded from {file_path}.')
+        else:
+            print(f'The file {file_path} does not exist.')
+
 
 def train(agent, run_num=None, epochs=None, plotting_scores=False):
     total_score = 0
@@ -121,7 +157,7 @@ def train(agent, run_num=None, epochs=None, plotting_scores=False):
 
             if score > record:
                 record = score
-                agent.save_scores(record, total_score, run_num, 'train')
+                agent.save_model(record, total_score, run_num, 'train')
 
             if plotting_scores:
                 plot_scores.append(score)
@@ -130,7 +166,7 @@ def train(agent, run_num=None, epochs=None, plotting_scores=False):
                 plot(plot_scores, plot_mean_scores, "Training...", agent.num_games)
 
         if epochs == agent.num_games:
-            agent.save_scores(record, total_score, run_num, 'train')
+            agent.save_model(record, total_score, run_num, 'train')
             break
 
 
@@ -159,7 +195,7 @@ def evaluate(agent, run_num=None, epochs=None, plotting_scores=False):
 
             if score > record:
                 record = score
-                agent.save_scores(record, total_score, run_num, 'evaluate')
+                agent.save_model(record, total_score, run_num, 'evaluate')
 
             if plotting_scores:
                 plot_scores.append(score)
@@ -168,5 +204,5 @@ def evaluate(agent, run_num=None, epochs=None, plotting_scores=False):
                 plot(plot_scores, plot_mean_scores, "Evaluating...", agent.num_games)
 
         if epochs == agent.num_games:
-            agent.save_scores(record, total_score, run_num, 'evaluate')
+            agent.save_model(record, total_score, run_num, 'evaluate')
             break

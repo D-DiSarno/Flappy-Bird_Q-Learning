@@ -170,7 +170,7 @@ def train(agent, run_num=None, epochs=None, plotting_scores=False):
             if score > record:
                 record = score
                 agent.model.save(run_num, 'train')
-                agent.save_scores(record, total_score, run_num, 'train')
+                agent.save_model(record, total_score, run_num, 'train')
 
             if plotting_scores:
                 plot_scores.append(score)
@@ -180,7 +180,7 @@ def train(agent, run_num=None, epochs=None, plotting_scores=False):
 
         if epochs == agent.num_games:
             agent.model.save(run_num, 'train')
-            agent.save_scores(record, total_score, run_num, 'train')
+            agent.save_model(record, total_score, run_num, 'train')
             break
 
 
@@ -206,7 +206,7 @@ def evaluate(agent, run_num=None, epochs=None, plotting_scores=False):
 
             if score > record:
                 record = score
-                agent.save_scores(record, total_score, run_num, 'evaluate')
+                agent.save_model(record, total_score, run_num, 'evaluate')
 
             if plotting_scores:
                 plot_scores.append(score)
@@ -215,5 +215,5 @@ def evaluate(agent, run_num=None, epochs=None, plotting_scores=False):
                 plot(plot_scores, plot_mean_scores, "Evaluating...", agent.num_games)
 
         if epochs == agent.num_games:
-            agent.save_scores(record, total_score, run_num, 'evaluate')
+            agent.save_model(record, total_score, run_num, 'evaluate')
             break
