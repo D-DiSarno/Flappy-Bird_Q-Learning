@@ -184,7 +184,7 @@ def evaluate(agent, run_num=None, epochs=None, plotting_scores=False):
         # get old state
         state = agent.get_state()
         # get move
-        action = agent.get_action(state, epsilon=False)
+        action = agent.get_action(state)
         # action then new state
         _, done, score = agent.gm.actionSequence(action)
 
