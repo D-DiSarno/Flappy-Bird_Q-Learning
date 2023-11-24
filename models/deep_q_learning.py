@@ -1,13 +1,14 @@
 
 import torch
 import torch.optim as optim
-import torch.nn as nn
-import random
 import math
 import torch.nn as nn
 import torch.nn.functional as F
 import random
 from collections import namedtuple, deque
+from .utils import DQN_Parameters, _ACTIONS, _FLAP, _NO_FLAP,_MIN_V, _MAX_V,_MAX_X, _MAX_Y,REWARD_Values
+
+
 
 Transition = namedtuple(
     "Transition", ("state", "action", "reward", "next_state", "end")
@@ -39,40 +40,28 @@ class DQN(nn.Module):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
         return self.layer3(x)
+
 class DeepQLearning:
-    _FLAP, _NO_FLAP = 0, 1
-    _MIN_V, _MAX_V = -8, 10
-    _MAX_X, _MAX_Y = 288, 512
-    _ACTIONS = [_FLAP, _NO_FLAP]
 
     def __init__(
-        self,
-        n_observations,
-        n_actions,
-        device,
-        batch_size=128,
-        gamma=0.99,
-        eps_start=0.9,
-        eps_end=0.01,
-        eps_decay=100000,
-        tau=0.005,
-        lr=1e-4 * 5,
-        update_freq=100,
+            self,
+            n_observations,
+            n_actions,
     ) -> None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.n_observations = n_observations
         self.n_actions = n_actions
         self.device = device
 
-        self.batch_size = batch_size
-        self.gamma = gamma
-        self.eps_start = eps_start
-        self.eps_end = eps_end
-        self.eps_decay = eps_decay
-        self.tau = tau
-        self.lr = lr
+        self.batch_size = DQN_Parameters["batch_size"]
+        self.gamma = DQN_Parameters["gamma"]
+        self.eps_start = DQN_Parameters["eps_start"]
+        self.eps_end = DQN_Parameters["eps_end"]
+        self.eps_decay = DQN_Parameters["eps_decay"]
+        self.tau = DQN_Parameters["tau"]
+        self.lr = DQN_Parameters["lr"]
 
-        self.steps_done = 0
+        self.steps_done = DQN_Parameters["steps_done"]
         self.episode_durations = []
 
         self.policy_net = DQN(n_observations, n_actions).to(self.device)
@@ -85,8 +74,17 @@ class DeepQLearning:
         )
 
         self.memory = ReplayMemory(10000)
-        self.N = update_freq
-        self.update_counter = 0
+        self.N = DQN_Parameters["update_freq"]
+        self.update_counter = DQN_Parameters["update_counter"]
+
+        self._ACTIONS = _ACTIONS
+        self._FLAP = _FLAP
+        self._NO_FLAP = _NO_FLAP
+        self._MIN_V = _MIN_V
+        self._MAX_V = _MAX_V
+        self._MAX_X = _MAX_X
+        self._MAX_Y = _MAX_Y
+
 
     def reward_values(self):
         """returns the reward values used for training
@@ -96,7 +94,10 @@ class DeepQLearning:
         1 for passing through each pipe and 0 for all other state
         transitions.
         """
-        return {"positive": 1.0, "tick": 0.0, "loss": -10.0}
+        positve=REWARD_Values["positive"]
+        tick=REWARD_Values["tick"]
+        loss=REWARD_Values["loss"]
+        return {positve,tick,loss}
 
     def observe(self, s1, a, r, s2, end):
         enc_s1 = self._state_encoder(s1)
@@ -155,9 +156,6 @@ class DeepQLearning:
         if len(self.memory) < self.batch_size:
             return
         transitions = self.memory.sample(self.batch_size)
-        # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
-        # detailed explanation). This converts batch-array of Transitions
-        # to Transition of batch-arrays.
         batch = Transition(*zip(*transitions))
 
         # Compute a mask of non-final states and concatenate the batch elements

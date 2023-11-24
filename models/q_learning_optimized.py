@@ -1,32 +1,32 @@
 import random
 import math
 import json
+from .utils import Q_Parameters, _ACTIONS, _FLAP, _NO_FLAP,_MIN_V, _MAX_V,_MAX_X, _MAX_Y
+
 
 
 class QLearning:
-    _FLAP, _NO_FLAP = 0, 1
-    _MIN_V, _MAX_V = -8, 10
-    _MAX_X, _MAX_Y = 288, 512
-    _ACTIONS = [_FLAP, _NO_FLAP]
 
-    def __init__(
-        self,
-        epsilon_start=0.9,
-        epsilon_end=0.05,
-        alpha=0.25,
-        alpha_end=0.1,
-        gamma=0.99,
-        partitions=30,
-    ):
-        self.eps_start = epsilon_start
-        self.eps_decay = 100000
-        self.eps_end = epsilon_end
-        self.alpha = alpha
-        self.alpha_end = alpha_end
-        self.alpha_decay = 0.999
-        self.gamma = gamma
-        self.partitions = partitions
-        self.steps_done = 0
+
+    def __init__(self):
+        self.eps_start = Q_Parameters["epsilon_start"]
+        self.eps_decay = Q_Parameters["epsilon_decay"]
+        self.eps_end = Q_Parameters["epsilon_end"]
+        self.alpha = Q_Parameters["alpha"]
+        self.alpha_end = Q_Parameters["alpha_end"]
+        self.alpha_decay = Q_Parameters["alpha_decay"]
+        self.gamma = Q_Parameters["gamma"]
+        self.partitions = Q_Parameters["partitions"]
+        self.steps_done = Q_Parameters["steps_done"]
+
+        self._ACTIONS = _ACTIONS
+        self._FLAP = _FLAP
+        self._NO_FLAP = _NO_FLAP
+        self._MIN_V = _MIN_V
+        self._MAX_V = _MAX_V
+        self._MAX_X = _MAX_X
+        self._MAX_Y = _MAX_Y
+
 
         self.Q_table = {
             ((y_pos, pipe_top_y, x_dist, velocity), action): 0
