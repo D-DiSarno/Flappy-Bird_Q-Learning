@@ -1,15 +1,18 @@
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
+
+from helper import plot as plot
 from ple.games.flappybird import FlappyBird
 from ple import PLE
 from tqdm import tqdm
+
 def train(nb_episodes, agent):
     reward_values = agent.reward_values()
 
     env = PLE(
         FlappyBird(),
-        fps=30,
-        display_screen=True,
-        force_fps=False,
+        fps=30,#di base 30
+        display_screen=False,
+        force_fps=True,
         rng=None,
         reward_values=reward_values,
     )
@@ -19,6 +22,9 @@ def train(nb_episodes, agent):
     total_rewards = []
     scores = []
     total = nb_episodes
+
+    plot_scores = []
+    plot_mean_scores = []
 
     score = 0
     with tqdm(total=nb_episodes, position=0, leave=True) as pbar:
@@ -30,7 +36,7 @@ def train(nb_episodes, agent):
             # step the environment
             reward = env.act(env.getActionSet()[action])
             if reward>10:
-                print("reward=%d" % reward)
+              print("reward=%d" % reward)
 
             # let the agent observe the current state transition
             newState = env.game.getGameState()
@@ -49,15 +55,27 @@ def train(nb_episodes, agent):
                     print(
                         f"Avg score for {total - nb_episodes} episodes: {sum(scores) / len(scores)}"
                     )
+                    plot_scores.append(score)
+                    mean_score = sum(scores) / len(scores)
+                    plot_mean_scores.append(mean_score)
+                    plot(plot_scores, plot_mean_scores, "Training...")
                     scores = []
-                if score > 1000:
-                    break
+                if score > 1000 and score > max_score:
+                    agent.save_model()
+                    max_score = score
+
                 scores.append(score)
                 total_rewards.append(score)
                 env.reset_game()
                 pbar.update(1)
                 nb_episodes -= 1
+
+                #########
+
+
+
                 score = 0
+
         print(f"Max Train score: {max(scores)}")
         print(f"Avg score for {total} episodes: {sum(scores) / len(scores)}")
 

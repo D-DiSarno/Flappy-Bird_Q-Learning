@@ -1,16 +1,8 @@
 from ple.games.flappybird import FlappyBird
 from ple import PLE
 from tqdm import tqdm
-import torch
-#from models.q_learning import QLearning
-from models.deep_q_learning import DeepQLearning
-from models.q_learning_optimized import QLearning
-
-from flappy_agent import FlappyAgent
-from train import train
-
-
-def run_game(nb_episodes, agent):
+from matplotlib import pyplot as plt
+def test(nb_episodes, agent):
     """Runs nb_episodes episodes of the game with agent picking the moves.
     An episode of FlappyBird ends with the bird crashing into a pipe or going off screen.
     """
@@ -83,13 +75,3 @@ def check_ninety_percent_over_fifty(array):
     percentage_over_fifty = (count_over_fifty / total_elements) * 100
     return percentage_over_fifty >= 90
 
-
-
-if __name__ == "__main__":
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    agent = FlappyAgent(learner=DeepQLearning(8,2))
-
-    train(25000, agent)
-    # agent.load_model("./models/q_table18000.json")
-    #run_game(100, agent)
