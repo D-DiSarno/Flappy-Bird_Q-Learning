@@ -1,6 +1,5 @@
 # from q_learning.q_learning_optimized import QLearning
 
-
 class FlappyAgent:
     def __init__(self, learner):
         self.learner = learner
@@ -43,10 +42,8 @@ class FlappyAgent:
         """
         return self.learner.policy(state)
 
-    def save_model(self):
-        return self.learner.save_model()
+    def save_model(self, filename="q_table.json"):
+        return self.learner.save_model(filename=filename)
 
     def load_model(self, file_name="target_model.pth"):
         return self.learner.load_model(file_name)
-
-

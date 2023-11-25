@@ -4,10 +4,7 @@ import json
 from .utils import Q_Parameters, _ACTIONS, _FLAP, _NO_FLAP,_MIN_V, _MAX_V,_MAX_X, _MAX_Y
 
 
-
 class QLearning:
-
-
     def __init__(self):
         self.eps_start = Q_Parameters["epsilon_start"]
         self.eps_decay = Q_Parameters["epsilon_decay"]
@@ -101,10 +98,10 @@ class QLearning:
         else:
             return self._NO_FLAP
 
-    def save_model(self):
+    def save_model(self, filename="q_table.json"):
         q_table_str_keys = {str(key): value for key, value in self.Q_table.items()}
 
-        with open("q_table.json", "w") as file:
+        with open(filename, "w") as file:
             json.dump(q_table_str_keys, file)
 
     def load_model(self, filename="q_table.json"):
@@ -123,7 +120,7 @@ class QLearning:
         enc_pipe_top_y = self._get_interval(512, self.partitions, pipe_top_y)
         enc_x_dist = self._get_interval(288, self.partitions, x_dist)
 
-        return (enc_y_pos, enc_pipe_top_y, enc_x_dist, velocity)
+        return enc_y_pos, enc_pipe_top_y, enc_x_dist, velocity
 
     def _get_interval(self, total_size, interval, value):
         interval_width = total_size / interval
