@@ -24,7 +24,6 @@ class QLearning:
         self._MAX_X = _MAX_X
         self._MAX_Y = _MAX_Y
 
-
         self.Q_table = {
             ((y_pos, pipe_top_y, x_dist, velocity), action): 0
             for y_pos in range(self.partitions)

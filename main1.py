@@ -19,8 +19,8 @@ def run_game(nb_episodes, agent):
     env = PLE(
         FlappyBird(),
         fps=30,
-        display_screen=True,
-        force_fps=False,
+        display_screen=False,
+        force_fps=True,
         rng=None,
         reward_values=reward_values,
     )
@@ -32,21 +32,13 @@ def run_game(nb_episodes, agent):
     score = 0
     with tqdm(total=nb_episodes, position=0, leave=True) as pbar:
         while nb_episodes > 0:
-            # pick an action
-            # TODO: for training using agent.training_policy instead
             action = agent.policy(env.game.getGameState())
-            # action = agent.training_policy(env.game.getGameState())
-            # step the environment
             reward = env.act(env.getActionSet()[action])
-
-            # TODO: for training let the agent observe the current state transition
-
             score += reward
 
             # reset the environment if the game is over
             if env.game_over():
                 if score > 1000 and score > max_score:
-                    # agent.save_model()
                     max_score = score
 
                 if nb_episodes % 20 == 0 and scores != []:
@@ -59,8 +51,8 @@ def run_game(nb_episodes, agent):
                 env.reset_game()
                 nb_episodes -= 1
                 score = 0
-    print(f"\n90% over 50: {check_ninety_percent_over_fifty(scores)}")
-    print(f"Max Test score: {max(scores)}")
+    # print(f"\n90% over 50: {check_ninety_percent_over_fifty(scores)}")
+    print(f"\nMax Test score: {max(scores)}")
 
 
 def check_ninety_percent_over_fifty(array):
