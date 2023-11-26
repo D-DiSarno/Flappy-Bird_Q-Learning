@@ -1,22 +1,34 @@
 import random
+import math
+import json
+from .utils import Q_Parameters, _ACTIONS, _FLAP, _NO_FLAP,_MIN_V, _MAX_V,_MAX_X, _MAX_Y
 
 
 class QLearning:
-    _FLAP, _NO_FLAP = 0, 1
-    _MIN_V, _MAX_V = -8, 10
-    _MAX_X, _MAX_Y = 288, 512
-    _ACTIONS = [_FLAP, _NO_FLAP]
+    def __init__(self):
+        self.eps_start = Q_Parameters["epsilon_start"]
+        self.eps_decay = Q_Parameters["epsilon_decay"]
+        self.eps_end = Q_Parameters["epsilon_end"]
+        self.alpha = Q_Parameters["alpha"]
+        self.alpha_end = Q_Parameters["alpha_end"]
+        self.alpha_decay = Q_Parameters["alpha_decay"]
+        self.gamma = Q_Parameters["gamma"]
+        self.partitions = Q_Parameters["partitions"]
+        self.steps_done = Q_Parameters["steps_done"]
 
-    def __init__(self, epsilon=0.1, alpha=0.1, gamma=1):
-        self.epsilon = epsilon
-        self.alpha = alpha
-        self.gamma = gamma
+        self._ACTIONS = _ACTIONS
+        self._FLAP = _FLAP
+        self._NO_FLAP = _NO_FLAP
+        self._MIN_V = _MIN_V
+        self._MAX_V = _MAX_V
+        self._MAX_X = _MAX_X
+        self._MAX_Y = _MAX_Y
 
         self.Q_table = {
             ((y_pos, pipe_top_y, x_dist, velocity), action): 0
-            for y_pos in range(15)
-            for pipe_top_y in range(15)
-            for x_dist in range(15)
+            for y_pos in range(self.partitions)
+            for pipe_top_y in range(self.partitions)
+            for x_dist in range(self.partitions)
             for velocity in range(-8, 11)
             for action in range(2)
         }
@@ -30,8 +42,8 @@ class QLearning:
         subsequent steps in the same episode. That is, s1 in the second call will be s2
         from the first call.
         """
-        s1 = self.state_encoder(s1)
-        s2 = self.state_encoder(s2)
+        s1 = self._state_encoder(s1)
+        s2 = self._state_encoder(s2)
 
         future_reward = (
             max(self.Q_table[(s2, self._NO_FLAP)], self.Q_table[(s2, self._FLAP)])
@@ -39,9 +51,12 @@ class QLearning:
             else 0
         )
 
-        self.Q_table[(s1, a)] = self.Q_table[(s1, a)] + self.alpha * (
-            r + self.gamma * future_reward - self.Q_table[(s1, a)]
-        )
+        old_alpha = self.alpha
+        self.alpha = old_alpha * self.alpha_decay
+
+        self.Q_table[(s1, a)] = self.Q_table[(s1, a)] + max(
+            self.alpha_end, old_alpha
+        ) * (r + self.gamma * future_reward - self.Q_table[(s1, a)])
 
     def training_policy(self, state):
         """Returns the index of the action that should be done in state while training the agent.
@@ -49,9 +64,15 @@ class QLearning:
 
         training_policy is called once per frame in the game while training
         """
-        state = self.state_encoder(state)
+        state = self._state_encoder(state)
         threshold = random.uniform(0, 1)
-        if threshold < self.epsilon:
+
+        eps_threshold = self.eps_end + (self.eps_start - self.eps_end) * math.exp(
+            -1.0 * self.steps_done / self.eps_decay
+        )
+        self.steps_done += 1
+
+        if threshold < eps_threshold:
             return random.choice(self._ACTIONS)
         elif self.Q_table[(state, self._FLAP)] == self.Q_table[(state, self._NO_FLAP)]:
             return random.choice(self._ACTIONS)
@@ -67,7 +88,8 @@ class QLearning:
         policy is called once per frame in the game (30 times per second in real-time)
         and needs to be sufficiently fast to not slow down the game.
         """
-        state = self.state_encoder(state)
+        state = self._state_encoder(state)
+
         if self.Q_table[(state, self._FLAP)] == self.Q_table[(state, self._NO_FLAP)]:
             return random.choice(self._ACTIONS)
         elif self.Q_table[(state, self._FLAP)] > self.Q_table[(state, self._NO_FLAP)]:
@@ -75,17 +97,29 @@ class QLearning:
         else:
             return self._NO_FLAP
 
-    def state_encoder(self, state):
+    def save_model(self, filename="q_table.json"):
+        q_table_str_keys = {str(key): value for key, value in self.Q_table.items()}
+
+        with open(filename, "w") as file:
+            json.dump(q_table_str_keys, file)
+
+    def load_model(self, filename="q_table.json"):
+        with open(filename, "r") as file:
+            q_table_str_keys = json.load(file)
+
+        self.Q_table = {eval(key): value for key, value in q_table_str_keys.items()}
+
+    def _state_encoder(self, state):
         y_pos = max(0, min(state["player_y"], 512))
         pipe_top_y = max(25, min(state["next_pipe_top_y"], 192))
         x_dist = max(0, min(state["next_pipe_dist_to_player"], 288))
         velocity = max(-8, min(state["player_vel"], 10))
 
-        enc_y_pos = self._get_interval(512, 15, y_pos)
-        enc_pipe_top_y = self._get_interval(512, 15, pipe_top_y)
-        enc_x_dist = self._get_interval(288, 15, x_dist)
+        enc_y_pos = self._get_interval(512, self.partitions, y_pos)
+        enc_pipe_top_y = self._get_interval(512, self.partitions, pipe_top_y)
+        enc_x_dist = self._get_interval(288, self.partitions, x_dist)
 
-        return (enc_y_pos, enc_pipe_top_y, enc_x_dist, velocity)
+        return enc_y_pos, enc_pipe_top_y, enc_x_dist, velocity
 
     def _get_interval(self, total_size, interval, value):
         interval_width = total_size / interval
