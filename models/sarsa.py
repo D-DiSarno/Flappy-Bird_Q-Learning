@@ -33,11 +33,11 @@ class SARSA:
             for action in range(2)
         }
 
-    def observe(self, s1, a, r, s2, a2, end):
+    def observe(self, s1, a, r, s2, end):
         s1 = self._state_encoder(s1)
         s2 = self._state_encoder(s2)
 
-        future_reward = self.Q_table[(s2, a2)] if not end else 0
+        future_reward = self.Q_table[(s2, r)] if not end else 0
 
         old_alpha = self.alpha
         self.alpha = old_alpha * self.alpha_decay
