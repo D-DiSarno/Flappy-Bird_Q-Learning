@@ -31,6 +31,19 @@ DQN_Parameters = {
     "update_counter": 0,
 }
 
+SARSA_Parameters = {
+    "epsilon_start": 0.9,
+    "epsilon_end": 0.05,
+    "alpha": 0.25,
+    "alpha_end": 0.05,
+    "gamma": 0.99,
+    "partitions": 30,
+    "epsilon_decay": 100000,
+    "alpha_decay": 0.999,
+    "steps_done": 0,
+}
+
+
 # Valori reward
 REWARD_Values = {
     "positive": 1.0,
