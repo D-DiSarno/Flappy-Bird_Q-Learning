@@ -1,5 +1,4 @@
 from matplotlib import pyplot as plt
-
 from helper import plot as plot
 from ple.games.flappybird import FlappyBird
 from ple import PLE
@@ -7,7 +6,7 @@ from tqdm import tqdm
 import os
 
 
-def train(nb_episodes, agent):
+def train(nb_episodes, agent, model_name):
     reward_values = agent.reward_values()
 
     env = PLE(
@@ -41,8 +40,8 @@ def train(nb_episodes, agent):
             reward = env.act(env.getActionSet()[action])
 
             # let the agent observe the current state transition
-            newState = env.game.getGameState()
-            agent.observe(state, action, reward, newState, env.game_over())
+            new_state = env.game.getGameState()
+            agent.observe(state, action, reward, new_state, env.game_over())
             frames += 1
 
             score += reward
@@ -79,11 +78,12 @@ def train(nb_episodes, agent):
         print(f"\nMax Reward: {max(scores)}")
         print(f"Avg Reward for {total} episodes: {sum(scores) / len(scores)}")
         print(f"Max Score: {max(game_scores)}")
+        print(f"Avg Score for {total} episodes: {sum(game_scores) / len(game_scores)}")
 
-    model_dir = "model_" + str(total)
+    model_dir = f"model_{model_name}_{str(total)}"
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
-    agent.save_model(filename=os.path.join(model_dir, f"q_table_{str(total)}.json"))
+    agent.save_model(filename=os.path.join(model_dir, f"q_table_{str(total)}"))
 
     plt.plot(game_scores, label="Score per Episode")
     plt.xlabel("Episode")
@@ -91,5 +91,3 @@ def train(nb_episodes, agent):
     plt.legend()
     plt.savefig(os.path.join(model_dir, f"plot_{str(total)}.png"))
     plt.show()
-
-    print(f"Number of Frames: {frames}")

@@ -1,4 +1,3 @@
-
 import torch
 import torch.optim as optim
 import math
@@ -7,8 +6,6 @@ import torch.nn.functional as F
 import random
 from collections import namedtuple, deque
 from .utils import DQN_Parameters, _ACTIONS, _FLAP, _NO_FLAP,_MIN_V, _MAX_V,_MAX_X, _MAX_Y,REWARD_Values
-
-
 
 Transition = namedtuple(
     "Transition", ("state", "action", "reward", "next_state", "end")
@@ -246,9 +243,8 @@ class DeepQLearning:
             normalized_velocity,
         )
 
-    def save_model(self, file_name="target_model.pth"):
-        torch.save(self.target_net.state_dict(), file_name)
-        print(f"Model saved to {file_name}.")
+    def save_model(self, filename="target_model.pth"):
+        torch.save(self.target_net.state_dict(), f"{filename}.pth")
 
     def load_model(self, file_name="target_model.pth"):
         self.target_net.load_state_dict(torch.load(file_name))

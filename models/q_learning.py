@@ -100,7 +100,7 @@ class QLearning:
     def save_model(self, filename="q_table.json"):
         q_table_str_keys = {str(key): value for key, value in self.Q_table.items()}
 
-        with open(filename, "w") as file:
+        with open(f"{filename}.json", "w") as file:
             json.dump(q_table_str_keys, file)
 
     def load_model(self, filename="q_table.json"):

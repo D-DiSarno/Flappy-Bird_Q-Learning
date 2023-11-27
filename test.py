@@ -49,6 +49,7 @@ def test(nb_episodes, agent):
                 nb_episodes -= 1
                 score = 0
                 game_score = 0
+
     print(f"\nMax Reward: {max(scores)}")
     print(f"Max Score: {max(game_scores)}")
 
