@@ -4,6 +4,7 @@ _MIN_V, _MAX_V = -8, 10
 _MAX_X, _MAX_Y = 288, 512
 _ACTIONS = [_FLAP, _NO_FLAP]
 
+#train episodes: 25000 - test episodes: 100
 # Parametri per il Q
 Q_Parameters = {
     "epsilon_start": 0.9,
@@ -18,6 +19,7 @@ Q_Parameters = {
 }
 
 # Parametri per il DQN
+#train episodes: 10000 - test episodes: 100
 DQN_Parameters = {
     "batch_size": 128,
     "gamma": 1.0,
@@ -31,6 +33,7 @@ DQN_Parameters = {
     "update_counter": 0,
 }
 
+#train episodes: 25000 - test episodes: 100
 SARSA_Parameters = {
     "epsilon_start": 0.9,
     "epsilon_end": 0.05,
