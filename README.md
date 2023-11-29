@@ -16,7 +16,7 @@ pip install -r requirements.txt
 
 Per eseguire il programma e far partire il gioco, esegui semplicemente il file main.py.
 ```bash
-pyhon main.py
+python main.py
 ```
 Per velocizzare la fase di train e di test è possibile impostare **display_screen=False** e
 **force_fps=True**.
