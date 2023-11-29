@@ -4,7 +4,7 @@ Questo progetto implementa diverse tecniche di apprendimento automatico per adde
 
 ## Prerequisiti
 
-- Python 3.8.10
+- Python 3.9 o superiori
 - Dipendenze elencate in `requirements.txt`
 
 Installare le dipendenze con:
