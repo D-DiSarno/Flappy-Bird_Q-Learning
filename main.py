@@ -54,14 +54,14 @@ def train(nb_episodes, agent, model_name):
     game_score = 0
     with tqdm(total=nb_episodes, position=0, leave=True) as pbar:
         while nb_episodes > 0:
-            # pick an action
+
             state = env.game.getGameState()
             action = agent.training_policy(state)
 
-            # step the environment
+
             reward = env.act(env.getActionSet()[action])
 
-            # let the agent observe the current state transition
+
             new_state = env.game.getGameState()
             agent.observe(state, action, reward, new_state, env.game_over())
             frames += 1
@@ -69,7 +69,7 @@ def train(nb_episodes, agent, model_name):
             score += reward
             game_score += 1 if int(reward) > 0 else 0
 
-            # reset the environment if the game is over
+
             if env.game_over():
                 if nb_episodes % 1000 == 0 and scores != []:
                     print(
@@ -140,7 +140,7 @@ def test(nb_episodes, agent):
             score += reward
             game_score += 1 if int(reward) > 0 else 0
 
-            # reset the environment if the game is over
+
             if env.game_over():
                 if score > 1000 and score > max_score:
                     max_score = score

@@ -46,14 +46,7 @@ class SARSA:
         self.alpha = max(self.alpha_end, old_alpha * self.alpha_decay)
 
         self.Q_table[(s1, a)] += self.alpha * (r + self.gamma * future_reward - self.Q_table[(s1, a)])
-        """future_reward = self.Q_table[(s2, r)] if not end else 0
 
-        old_alpha = self.alpha
-        self.alpha = old_alpha * self.alpha_decay
-
-        self.Q_table[(s1, a)] = self.Q_table[(s1, a)] + max(
-            self.alpha_end, old_alpha
-        ) * (r + self.gamma * future_reward - self.Q_table[(s1, a)])"""
 
     def training_policy(self, state):
         state = self._state_encoder(state)
@@ -102,7 +95,7 @@ class SARSA:
             x_dist = max(0, min(state["next_pipe_dist_to_player"], 288))
             velocity = max(-8, min(state["player_vel"], 10))
         elif isinstance(state, tuple):
-            # Adatta questa parte se lo stato è una tupla invece di un dizionario
+
             y_pos, pipe_top_y, x_dist, velocity = state
         else:
             raise ValueError("Tipo di stato non gestito")

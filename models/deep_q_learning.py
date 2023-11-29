@@ -84,13 +84,7 @@ class DeepQLearning:
 
 
     def reward_values(self):
-        """returns the reward values used for training
 
-        Note: These are only the rewards used for training.
-        The rewards used for evaluating the agent will always be
-        1 for passing through each pipe and 0 for all other state
-        transitions.
-        """
         positve=REWARD_Values["positive"]
         tick=REWARD_Values["tick"]
         loss=REWARD_Values["loss"]
@@ -109,24 +103,24 @@ class DeepQLearning:
         return self._select_action(state, training=False)
 
     def _store_transition(self, s1, a, r, s2, end):
-        # Convert rewards to tensors, and actions to tensors if not already
+
         s1 = torch.tensor([s1], device=self.device, dtype=torch.float32)
         a = torch.tensor([[a]], device=self.device, dtype=torch.long)
         r = torch.tensor([r], device=self.device, dtype=torch.float32)
         end = torch.tensor([end], device=self.device, dtype=torch.bool)
 
-        # If it's the end of the episode, there is no next state
+
         s2 = (
             torch.tensor([s2], device=self.device, dtype=torch.float32)
             if not end
             else None
         )
 
-        # Store the transition in replay memory
+
         self.memory.push(s1, a, r, s2, end)
 
     def _select_action(self, state, training=False):
-        # Private method
+
         sample = random.random()
         eps_threshold = self.eps_end + (self.eps_start - self.eps_end) * math.exp(
             -1.0 * self.steps_done / self.eps_decay
@@ -134,29 +128,28 @@ class DeepQLearning:
         self.steps_done += 1
 
         if training and sample < eps_threshold:
-            # Exploration: choose a random action
+
             return random.choice(self._ACTIONS)
         else:
-            # Exploitation: choose the best action from policy net
+
             with torch.no_grad():
                 encoded_state = self._state_encoder(state)
                 state_tensor = torch.tensor(
                     [encoded_state], device=self.device, dtype=torch.float32
                 )
-                # Forward pass through the network
+
                 q_values = self.policy_net(state_tensor)
-                # Select the action with highest Q-value
+
                 return q_values.max(1)[1].item()
 
     def _optimize_model(self):
-        # Private method
+
         if len(self.memory) < self.batch_size:
             return
         transitions = self.memory.sample(self.batch_size)
         batch = Transition(*zip(*transitions))
 
-        # Compute a mask of non-final states and concatenate the batch elements
-        # (a final state would've been the one after which simulation ended)
+
         non_final_mask = torch.tensor(
             tuple(map(lambda s: s is not None, batch.next_state)),
             device=self.device,
@@ -169,32 +162,26 @@ class DeepQLearning:
         action_batch = torch.cat(batch.action)
         reward_batch = torch.cat(batch.reward)
 
-        # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
-        # columns of actions taken. These are the actions which would've been taken
-        # for each batch state according to policy_net
+
         state_action_values = self.policy_net(state_batch).gather(1, action_batch)
 
-        # Compute V(s_{t+1}) for all next states.
-        # Expected values of actions for non_final_next_states are computed based
-        # on the "older" target_net; selecting their best reward with max(1)[0].
-        # This is merged based on the mask, such that we'll have either the expected
-        # state value or 0 in case the state was final.
+
         next_state_values = torch.zeros(self.batch_size, device=self.device)
         with torch.no_grad():
             next_state_values[non_final_mask] = self.target_net(
                 non_final_next_states
             ).max(1)[0]
-        # Compute the expected Q values
+
         expected_state_action_values = (next_state_values * self.gamma) + reward_batch
 
-        # Compute Huber loss
+
         criterion = nn.SmoothL1Loss()
         loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
 
-        # Optimize the model
+
         self.optimizer.zero_grad()
         loss.backward()
-        # In-place gradient clipping
+
         torch.nn.utils.clip_grad_value_(self.policy_net.parameters(), 100)
         self.optimizer.step()
 
@@ -204,7 +191,7 @@ class DeepQLearning:
 
     def _soft_update(self, tau=None):
         if tau is None:
-            tau = self.tau  # Use the class's tau value if none provided
+            tau = self.tau
 
         for target_param, policy_param in zip(
             self.target_net.parameters(), self.policy_net.parameters()

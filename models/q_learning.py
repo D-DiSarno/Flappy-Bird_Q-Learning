@@ -34,14 +34,7 @@ class QLearning:
         }
 
     def observe(self, s1, a, r, s2, end):
-        """this function is called during training on each step of the game where
-        the state transition is going from state s1 with action a to state s2 and
-        yields the reward r. If s2 is a terminal state, end==True, otherwise end==False.
 
-        Unless a terminal state was reached, two subsequent calls to observe will be for
-        subsequent steps in the same episode. That is, s1 in the second call will be s2
-        from the first call.
-        """
         s1 = self._state_encoder(s1)
         s2 = self._state_encoder(s2)
 
@@ -59,11 +52,7 @@ class QLearning:
         ) * (r + self.gamma * future_reward - self.Q_table[(s1, a)])
 
     def training_policy(self, state):
-        """Returns the index of the action that should be done in state while training the agent.
-        Possible actions in Flappy Bird are 0 (flap the wing) or 1 (do nothing).
 
-        training_policy is called once per frame in the game while training
-        """
         state = self._state_encoder(state)
         threshold = random.uniform(0, 1)
 
@@ -82,12 +71,7 @@ class QLearning:
             return self._NO_FLAP
 
     def policy(self, state):
-        """Returns the index of the action that should be done in state when training is completed.
-        Possible actions in Flappy Bird are 0 (flap the wing) or 1 (do nothing).
 
-        policy is called once per frame in the game (30 times per second in real-time)
-        and needs to be sufficiently fast to not slow down the game.
-        """
         state = self._state_encoder(state)
 
         if self.Q_table[(state, self._FLAP)] == self.Q_table[(state, self._NO_FLAP)]:
