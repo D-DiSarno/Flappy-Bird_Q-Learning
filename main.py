@@ -111,11 +111,11 @@ def train(nb_episodes, agent, model_name):
     plt.xlabel("Episode")
     plt.ylabel("Score")
     plt.legend()
-    plt.savefig(os.path.join(model_dir, f"plot_{str(total)}.png"))
+    plt.savefig(os.path.join(model_dir, f"plot_train_{str(total)}.png"))
     plt.show()
 
 
-def test(nb_episodes, agent):
+def test(nb_episodes, agent, plt_dir):
     reward_values = agent.reward_values()
 
     env = PLE(
@@ -129,6 +129,7 @@ def test(nb_episodes, agent):
     env.init()
     scores = []  # Punteggi dovuti alla reward
     game_scores = []  # Punteggi ottenuti nel gioco
+    total = nb_episodes
 
     max_score = float("-inf")
     score = 0
@@ -168,6 +169,7 @@ def test(nb_episodes, agent):
     plt.xlabel("Episode")
     plt.ylabel("Score")
     plt.legend()
+    plt.savefig(os.path.join(plt_dir, f"plot_test_{str(total)}.png"))
     plt.show()
 
 
@@ -217,7 +219,7 @@ if __name__ == "__main__":
             path_to_model = input('Relative path to the model: ')
             episodes = int(input('Number of episodes: '))
             agent.load_model(path_to_model)
-            test(episodes, agent)
+            test(episodes, agent, os.path.dirname(path_to_model))
             break
         else:
             typeGame = int(input('Please, insert a supported action: '))
