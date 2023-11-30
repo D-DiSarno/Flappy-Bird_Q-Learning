@@ -13,21 +13,6 @@ from ple import PLE
 from ple.games.flappybird import FlappyBird
 
 
-def plot(scores, mean_scores, type_game):
-    display.clear_output(wait=True)
-    plt.clf()
-    plt.title(type_game)
-    plt.xlabel('Number of Games')
-    plt.ylabel('Score')
-    plt.plot(scores)
-    plt.plot(mean_scores)
-    plt.ylim(ymin=0)
-    plt.text(len(scores)-1, scores[-1], str(scores[-1]))
-    plt.text(len(mean_scores)-1, mean_scores[-1], str(mean_scores[-1]))
-    plt.show(block=False)
-    plt.pause(.1)
-
-
 def train(nb_episodes, agent, model_name):
     reward_values = agent.reward_values()
 
@@ -47,20 +32,14 @@ def train(nb_episodes, agent, model_name):
     game_scores = []
     total = nb_episodes
 
-    plot_scores = []
-    plot_mean_scores = []
-
     score = 0
     game_score = 0
     with tqdm(total=nb_episodes, position=0, leave=True) as pbar:
         while nb_episodes > 0:
-
             state = env.game.getGameState()
             action = agent.training_policy(state)
 
-
             reward = env.act(env.getActionSet()[action])
-
 
             new_state = env.game.getGameState()
             agent.observe(state, action, reward, new_state, env.game_over())
@@ -68,7 +47,6 @@ def train(nb_episodes, agent, model_name):
 
             score += reward
             game_score += 1 if int(reward) > 0 else 0
-
 
             if env.game_over():
                 if nb_episodes % 1000 == 0 and scores != []:
@@ -78,12 +56,6 @@ def train(nb_episodes, agent, model_name):
                     print(
                         f"SCORES: [MAX: {max(game_scores)}] [AVG: {sum(game_scores) / len(game_scores)}]\n"
                     )
-                    plot_scores.append(game_score)
-                    mean_score = sum(game_scores) / len(game_scores)
-                    plot_mean_scores.append(mean_score)
-                    plot(plot_scores, plot_mean_scores, "Training...")
-                    scores = []
-                    game_scores = []
                 if score > 1000 and score > max_score:
                     agent.save_model()
                     max_score = score
