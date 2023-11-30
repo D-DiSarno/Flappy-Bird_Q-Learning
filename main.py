@@ -1,7 +1,6 @@
 import os
 
 import torch
-from IPython import display
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
